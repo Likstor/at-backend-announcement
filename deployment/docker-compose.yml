@@ -1,0 +1,29 @@
+name: at
+
+services:
+  backend-announcement:
+    container_name: backend-announcement
+    build:
+      context: ../
+      dockerfile: deployment/Dockerfile
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:${BACKEND_PORT}/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - at_announcement-storage
+      - at_auth
+      - at_proxy
+    env_file:
+      - .env
+    restart: unless-stopped
+    
+networks:
+  at_proxy:
+    external: true
+  at_auth:
+    external: true
+  at_announcement-storage:
+    external: true

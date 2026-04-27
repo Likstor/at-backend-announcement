@@ -1,0 +1,268 @@
+openapi: 3.1.0
+info:
+  title: Active Tver Announcement API
+  version: "1.0"
+
+tags:
+  - name: admin
+    description: Действия, доступ к которым имеют только администраторы
+  - name: announcement
+    description: Действия над объявлениями, доступные всем пользователям
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    error:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    announcement:
+      type: object
+      required:
+        - title
+        - description
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+    announcementFullForUsers:
+      allOf:
+        - $ref: "#/components/schemas/announcement"
+        - required:
+            - id
+            - created_at
+          properties:
+            id:
+              type: integer
+              format: int64
+              minimum: 0
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+    announcementFullForAdmins:
+      allOf:
+        - $ref: "#/components/schemas/announcementFullForUsers"
+        - required:
+            - admin
+          properties:
+            created_by:
+              type: integer
+              format: int64
+              minimum: 0
+            updated_by:
+              type: integer
+              format: int64
+              minimum: 0
+
+  responses:
+    internalServerError:
+      description: Ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    badRequest:
+      description: Допущена синтаксическая ошибка в запросе
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    unprocessableEntity:
+      description: Допущена семантическая ошибка в запросе (см. содержимое ответа)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    notFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    error:
+      description: Ошибка
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+
+paths:
+  /v1/announcements/{announcementID}:
+    get:
+      tags:
+        - announcement
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: announcementID
+          required: true
+          in: path
+          schema:
+            type: string
+            format: int64
+            minimum: 0
+      responses:
+        "404":
+          $ref: "#/components/responses/notFound"
+        "500":
+          $ref: "#/components/responses/internalServerError"
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/announcementFullForUsers"
+
+  /v1/announcements/chunk:
+    get:
+      tags:
+        - announcement
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page_size
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "500":
+          $ref: "#/components/responses/internalServerError"
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/announcementFullForUsers"
+
+  # ! Управление новостями
+
+  /admin/v1/announcements/{announcementID}:
+    get:
+      tags:
+        - admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: announcementID
+          required: true
+          in: path
+          schema:
+            type: string
+            format: int64
+            minimum: 0
+      responses:
+        "404":
+          $ref: "#/components/responses/notFound"
+        "500":
+          $ref: "#/components/responses/internalServerError"
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/announcementFullForAdmins"
+
+    delete:
+      tags:
+        - admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: announcementID
+          required: true
+          in: path
+          schema:
+            type: string
+            format: int64
+            minimum: 0
+      responses:
+        "404":
+          $ref: "#/components/responses/notFound"
+        "500":
+          $ref: "#/components/responses/internalServerError"
+        "204":
+          description: OK
+
+    put:
+      tags:
+        - admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: announcementID
+          required: true
+          in: path
+          schema:
+            type: string
+            format: int64
+            minimum: 0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/announcement"
+        required: true
+      responses:
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        "404":
+          description: Новость не найдена
+          $ref: "#/components/responses/notFound"
+        "204":
+          description: Новость успешно обновлена
+
+  /admin/v1/announcements:
+    post:
+      tags:
+        - admin
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/announcement"
+        required: true
+      responses:
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "422":
+          $ref: "#/components/responses/unprocessableEntity"
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcement_id:
+                    type: integer
