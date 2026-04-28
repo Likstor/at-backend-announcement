@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"at-backend-announcement/internal/domain"
-	"at-backend-announcement/internal/pkg/responses"
-	"at-backend-announcement/internal/pkg/apperror"
+	"at-backend-announcement/internal/pkg/logs"
 	"at-backend-announcement/internal/pkg/reqctx"
+	"at-backend-announcement/internal/pkg/responses"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -75,7 +75,7 @@ func (h announcementHandlerForAdmins) createAnnouncement(w http.ResponseWriter, 
 
 	id, err := h.usecase.Create(r.Context(), announcement)
 	if err != nil {
-		slog.ErrorContext(apperror.GetErrorCtx(r.Context(), err), err.Error())
+		logs.Error(r.Context(), err)
 
 		responses.InternalServerError(r.Context(), w)
 		return

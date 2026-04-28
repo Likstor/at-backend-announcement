@@ -28,7 +28,7 @@ func NewAnnouncementHandler(usecase announcementUsecase) *announcementHandler {
 func (a announcementHandler) Setup(prefix string, verifier middleware.Verifier, mux *http.ServeMux) {
 	muxWithAuth := http.NewServeMux()
 
-	muxWithAuth.HandleFunc("GET /", a.getPage)
+	muxWithAuth.HandleFunc("GET /page", a.getPage)
 	muxWithAuth.HandleFunc("GET /{id}", a.getByID)
 
 	muxWithAuthWrapped := middleware.Authorization(muxWithAuth, roles.User, verifier)

@@ -7,7 +7,7 @@ tags:
   - name: admin
     description: Действия, доступ к которым имеют только администраторы
   - name: announcement
-    description: Действия над объявлениями, доступные всем пользователям
+    description: Действия над объявлениями
 
 components:
   securitySchemes:
@@ -40,6 +40,7 @@ components:
         - required:
             - id
             - created_at
+            - updated_at
           properties:
             id:
               type: integer
@@ -55,7 +56,8 @@ components:
       allOf:
         - $ref: "#/components/schemas/announcementFullForUsers"
         - required:
-            - admin
+            - created_by
+            - updated_by
           properties:
             created_by:
               type: integer
@@ -99,14 +101,15 @@ components:
             $ref: "#/components/schemas/error"
 
 paths:
-  /v1/announcements/{announcementID}:
+  /v1/announcements/{id}:
     get:
+      description: Получение информации об объявлении
       tags:
         - announcement
       security:
         - bearerAuth: []
       parameters:
-        - name: announcementID
+        - name: id
           required: true
           in: path
           schema:
@@ -115,18 +118,20 @@ paths:
             minimum: 0
       responses:
         "404":
+          description: Объявление не найдено
           $ref: "#/components/responses/notFound"
         "500":
           $ref: "#/components/responses/internalServerError"
         "200":
-          description: OK
+          description: Объявление успешно получено
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/announcementFullForUsers"
 
-  /v1/announcements/chunk:
+  /v1/announcements/page:
     get:
+      description: Получения списка объявлений
       tags:
         - announcement
       security:
@@ -144,14 +149,15 @@ paths:
           required: false
           schema:
             type: integer
-            minimum: 0
+            minimum: 1
       responses:
         "500":
           $ref: "#/components/responses/internalServerError"
         "400":
+          description: Заданный параметр имеет неверный формат
           $ref: "#/components/responses/badRequest"
         "200":
-          description: OK
+          description: Объявления успешно получены
           content:
             application/json:
               schema:
@@ -161,16 +167,16 @@ paths:
                     items:
                       $ref: "#/components/schemas/announcementFullForUsers"
 
-  # ! Управление новостями
-
-  /admin/v1/announcements/{announcementID}:
+  /v1/admins/announcements/{id}:
     get:
+      description: Получении расширенной информации об объявлении
       tags:
         - admin
+        - announcement
       security:
         - bearerAuth: []
       parameters:
-        - name: announcementID
+        - name: id
           required: true
           in: path
           schema:
@@ -179,23 +185,26 @@ paths:
             minimum: 0
       responses:
         "404":
+          description: Объявление не найдено
           $ref: "#/components/responses/notFound"
         "500":
           $ref: "#/components/responses/internalServerError"
         "200":
-          description: OK
+          description: Объявление успешно получено
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/announcementFullForAdmins"
 
     delete:
+      description: Удаление объявления
       tags:
         - admin
+        - announcement
       security:
         - bearerAuth: []
       parameters:
-        - name: announcementID
+        - name: id
           required: true
           in: path
           schema:
@@ -204,19 +213,22 @@ paths:
             minimum: 0
       responses:
         "404":
+          description: Объявление не найдено
           $ref: "#/components/responses/notFound"
         "500":
           $ref: "#/components/responses/internalServerError"
         "204":
-          description: OK
+          description: Объявление успешно удалено
 
     put:
+      description: Обновление объявления
       tags:
         - admin
+        - announcement
       security:
         - bearerAuth: []
       parameters:
-        - name: announcementID
+        - name: id
           required: true
           in: path
           schema:
@@ -237,13 +249,17 @@ paths:
         "404":
           description: Новость не найдена
           $ref: "#/components/responses/notFound"
+        "500":
+          $ref: "#/components/responses/internalServerError"
         "204":
           description: Новость успешно обновлена
 
-  /admin/v1/announcements:
+  /v1/admins/announcements/:
     post:
+      description: Создание объявления
       tags:
         - admin
+        - announcement
       security:
         - bearerAuth: []
       requestBody:
@@ -257,8 +273,10 @@ paths:
           $ref: "#/components/responses/badRequest"
         "422":
           $ref: "#/components/responses/unprocessableEntity"
+        "500":
+          $ref: "#/components/responses/internalServerError"
         "200":
-          description: OK
+          description: Объявление успешно создано
           content:
             application/json:
               schema:
