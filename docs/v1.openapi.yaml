@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Active Tver Announcement API
+  title: Announcement service API
   version: "1.0"
 
 tags:
