@@ -11,7 +11,7 @@ const queryUpdate = `
 	SET 
 		title = $1,
 		description = $2,
-		updated_at = NOW() AT TIME ZONE 'utc';
+		updated_at = NOW() AT TIME ZONE 'utc',
 		updated_by = $3
 	WHERE 
 		id = $4;
